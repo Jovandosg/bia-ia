@@ -15,9 +15,9 @@ NC='\033[0m' # No Color
 
 # Configurações padrão
 DEFAULT_REGION="us-east-1"
-DEFAULT_CLUSTER="cluster-bia"
-DEFAULT_SERVICE="service-bia"
-DEFAULT_TASK_FAMILY="task-bia"
+DEFAULT_CLUSTER="cluster-bia-alb"
+DEFAULT_SERVICE="service-bia-alb"
+DEFAULT_TASK_FAMILY="task-bia-alb"
 DEFAULT_ECR_REPO="bia"
 
 # Função para exibir help

@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "=== DEBUG - Variáveis de Ambiente ==="
+      - echo "AWS_DEFAULT_REGION:" $AWS_DEFAULT_REGION
+      - echo "AWS_ACCOUNT_ID:" $AWS_ACCOUNT_ID
+      - echo "CODEBUILD_BUILD_ARN:" $CODEBUILD_BUILD_ARN
+      - echo "CODEBUILD_RESOLVED_SOURCE_VERSION:" $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - echo "=== Todas as variáveis AWS ==="
+      - env | grep AWS | sort
+      - echo "=== Todas as variáveis CODEBUILD ==="
+      - env | grep CODEBUILD | sort
+      - echo "=== Account ID atual via STS ==="
+      - aws sts get-caller-identity
+      - echo "=== Forçando account ID correto ==="
+      - export AWS_ACCOUNT_ID=975050217683
+      - echo "AWS_ACCOUNT_ID forçado:" $AWS_ACCOUNT_ID
+      - echo "=== Configurando ECR ==="
+      - REPOSITORY_URI=975050217683.dkr.ecr.us-east-1.amazonaws.com/bia
+      - echo "REPOSITORY_URI:" $REPOSITORY_URI
+      - echo "=== Login ECR ==="
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050217683.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo "=== Build Phase ==="
+      - echo "Pulando build para debug..."
+  post_build:
+    commands:
+      - echo "=== Debug concluído ==="
