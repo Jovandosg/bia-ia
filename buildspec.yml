@@ -4,12 +4,13 @@ phases:
   pre_build:
     commands:
       - echo Fazendo login no ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/bia
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050217683.dkr.ecr.us-east-1.amazonaws.com
+      - REPOSITORY_URI=975050217683.dkr.ecr.us-east-1.amazonaws.com/bia
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
       - echo "Repository URI:" $REPOSITORY_URI
       - echo "Image Tag:" $IMAGE_TAG
+      - echo "Account ID verificado:" 975050217683
   build:
     commands:
       - echo Build iniciado em `date`
@@ -20,7 +21,9 @@ phases:
     commands:
       - echo Build finalizado com sucesso em `date`
       - echo Fazendo push da imagem para o ECR...
+      - echo "Fazendo push para:" $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:latest
+      - echo "Fazendo push para:" $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo Gerando artefato da imagem para o ECS
       - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
