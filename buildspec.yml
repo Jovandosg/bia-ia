@@ -3,43 +3,33 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo "=== Forçando configurações corretas ==="
-      - echo "Account ID original:" $AWS_ACCOUNT_ID
-      - export AWS_ACCOUNT_ID=975050217683
-      - export AWS_DEFAULT_REGION=us-east-1
-      - echo "Account ID corrigido:" $AWS_ACCOUNT_ID
-      - echo "Região:" $AWS_DEFAULT_REGION
-      - echo "=== Verificando identidade ==="
-      - aws sts get-caller-identity
-      - echo "=== Configurando ECR ==="
-      - REPOSITORY_URI=975050217683.dkr.ecr.us-east-1.amazonaws.com/bia
+      - echo Fazendo login no ECR...
+      - echo "REPOSITORY_URI original (se existir):" $REPOSITORY_URI
+      - echo "Account ID atual:" $(aws sts get-caller-identity --query Account --output text)
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+      - unset REPOSITORY_URI
+      - export REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bia
+      - echo "REPOSITORY_URI corrigido para:" $REPOSITORY_URI
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
-      - echo "Repository URI:" $REPOSITORY_URI
-      - echo "Image Tag:" $IMAGE_TAG
-      - echo "=== Login ECR ==="
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050217683.dkr.ecr.us-east-1.amazonaws.com
   build:
     commands:
-      - echo "=== Build Phase ==="
-      - echo "Build iniciado em" `date`
-      - echo "Gerando imagem da BIA..."
+      - echo Build iniciado em `date`
+      - echo Gerando imagem da BIA...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Build concluído"
   post_build:
     commands:
-      - echo "=== Post Build Phase ==="
-      - echo "Fazendo push da imagem para ECR..."
-      - echo "Push para:" $REPOSITORY_URI:latest
+      - echo Build finalizado com sucesso em `date`
+      - echo "REPOSITORY_URI final:" $REPOSITORY_URI
+      - echo Fazendo push da imagem para o ECR...
       - docker push $REPOSITORY_URI:latest
-      - echo "Push para:" $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo "=== Gerando artefatos ==="
+      - echo Gerando artefato da imagem para o ECS
       - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
       - echo "Conteúdo do imagedefinitions.json:"
       - cat imagedefinitions.json
-      - echo "=== Deploy concluído ==="
-
+      - ls -la imagedefinitions.json
 artifacts:
   files: imagedefinitions.json
